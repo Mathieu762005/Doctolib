@@ -31,6 +31,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $errors['email'] = 'Mail non valide';
         }
     }
+    
+    if (empty($errors)) {
+        header("Location: accueil.php");
+    }
 }
 
 
