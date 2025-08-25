@@ -1,45 +1,47 @@
 <?php
-// var_dump($_POST);
+session_start();
+require 'donnees/users.php';
 
-// Création de regeX
-$regName = "/^[a-zA-Zàèé\-]+$/";
+$errors = [];
 
-// Je ne lance qu'uniquement lorsqu'il y a un formulaire validée via la méthod POST
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $email = $_POST['email'] ?? '';
+    $mdp = $_POST['mdp'] ?? '';
 
-    // je créé un tableau d'erreurs vide car pas d'erreur
-    $errors = [];
-
-    if (isset($_POST["mdp"])) {
-        // on va vérifier si c'est vide
-        if (empty($_POST["mdp"])) {
-            // si c'est vide, je créé une erreur dans mon tableau
-            $errors['mdp'] = 'mot de passe obligatoire';
-        } else if (!preg_match($regName, $_POST["mdp"])) {
-            // si ça ne respecte pas la regeX
-            $errors['mdp'] = 'Caractère(s) non autorisé(s)';
-        }
+    // Validation des champs
+    if (empty($email)) {
+        $errors['email'] = 'Mail obligatoire';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors['email'] = 'Mail non valide';
     }
 
-    if (isset($_POST["email"])) {
-        // on va vérifier si c'est vide
-        if (empty($_POST["email"])) {
-            // si c'est vide, je créé une erreur dans mon tableau
-            $errors['email'] = 'Mail obligatoire';
-        } else if (!filter_var($_POST["email"], FILTER_VALIDATE_EMAIL)) {
-            // si mail non valide, on créé une erreur
-            $errors['email'] = 'Mail non valide';
-        }
+    if (empty($mdp)) {
+        $errors['mdp'] = 'Mot de passe obligatoire';
+    } elseif (strlen($mdp) < 6) {
+        $errors['mdp'] = 'Mot de passe trop court';
     }
-    
+
+    // Vérification des identifiants uniquement si pas d'erreurs
     if (empty($errors)) {
-        header("Location: accueil.php");
+        $userFound = false;
+
+        foreach ($users as $user) {
+            if ($user['email'] === $email && password_verify($mdp, $user['password'])) {
+                $_SESSION['email'] = $user['email'];
+                $_SESSION['role'] = $user['role'];
+                $userFound = true;
+                header("Location: accueil.php");
+                exit;
+            }
+        }
+
+        if (!$userFound) {
+            $errors['login'] = "Email ou mot de passe incorrect";
+        }
     }
 }
-
-
-
 ?>
+
 
 <!DOCTYPE html>
 <html lang="fr">
